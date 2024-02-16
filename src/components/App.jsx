@@ -1,16 +1,57 @@
+import { useDispatch, useSelector } from 'react-redux';
+import { lazy, useEffect } from 'react';
+import { Header } from './Header';
+import { Navigate, Route, Routes } from 'react-router-dom';
+// import ContactListPage from 'pages/ContactListPage';
+import { getIsRefreshing, refreshUserThunk } from 'redux/authSlice';
+import { PrivateRoute } from './PrivateRoute';
+import { PublicRoute } from './PublicRoute';
+// import SignupPage from 'pages/SingupPage';
+// import LoginPage from 'pages/LoginPage';
+
+const ContactListPage = lazy(() => import('pages/ContactListPage'));
+const SignupPage = lazy(() => import('pages/SingupPage'));
+const LoginPage = lazy(() => import('pages/LoginPage'));
+
 export const App = () => {
-  return (
-    <div
-      style={{
-        height: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        fontSize: 40,
-        color: '#010101'
-      }}
-    >
-      React homework template
-    </div>
+  const dispatch = useDispatch();
+  const isRefreshing = useSelector(getIsRefreshing);
+
+  useEffect(() => {
+    dispatch(refreshUserThunk());
+  }, [dispatch]);
+
+  return isRefreshing ? (
+    <b> ..refreshing user...</b>
+  ) : (
+    <Routes>
+      <Route path="/" element={<Header />}>
+        <Route
+          index
+          element={
+            <PrivateRoute redirectTo="/login">
+              <ContactListPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute restricted>
+              <LoginPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <PublicRoute restricted>
+              <SignupPage />
+            </PublicRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
   );
 };
